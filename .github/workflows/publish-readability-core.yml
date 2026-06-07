@@ -1,0 +1,39 @@
+name: Publish readability-core
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "SDK version to publish"
+        required: true
+        default: "0.1.0-SNAPSHOT"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          VERSION_FROM_INPUT: ${{ inputs.version }}
+          VERSION_FROM_TAG: ${{ github.ref_name }}
+        run: |
+          VERSION_NAME="${VERSION_FROM_INPUT:-${VERSION_FROM_TAG#v}}"
+          ./gradlew :readability-core:publishAllPublicationsToGitHubPackagesRepository -PVERSION_NAME="$VERSION_NAME"
