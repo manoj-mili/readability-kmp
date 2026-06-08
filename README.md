@@ -57,7 +57,7 @@ dependencies {
 Publish locally:
 
 ```bash
-./gradlew :readability-core:publishToMavenLocal -PVERSION_NAME=0.1.0-local
+./gradlew :readability-core:publishToMavenLocal -PVERSION_NAME=0.1.0-alpha01
 ```
 
 Consume from another Kotlin Multiplatform project:
@@ -70,43 +70,36 @@ repositories {
 }
 
 dependencies {
-    implementation("com.mili.readability:readability-core:0.1.0-local")
+    implementation("com.mili.readability:readability-core:0.1.0-alpha01")
 }
 ```
 
-### GitHub Packages
+### JitPack
 
-Publish:
+This project is configured for JitPack with [`jitpack.yml`](./jitpack.yml).
+
+Create and push a release tag:
 
 ```bash
-./gradlew :readability-core:publishAllPublicationsToGitHubPackagesRepository \
-  -Pgithub.repository=OWNER/REPOSITORY \
-  -Pgpr.user=GITHUB_USER \
-  -Pgpr.key=GITHUB_TOKEN \
-  -PVERSION_NAME=0.1.0
+git tag 0.1.0-alpha01
+git push origin 0.1.0-alpha01
 ```
 
-Consume:
+Consume from another Gradle project:
 
 ```kotlin
 repositories {
     google()
     mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.github.com/OWNER/REPOSITORY")
-        credentials {
-            username = providers.gradleProperty("gpr.user").orNull
-            password = providers.gradleProperty("gpr.key").orNull
-        }
-    }
+    maven("https://jitpack.io")
 }
 
 dependencies {
-    implementation("com.mili.readability:readability-core:0.1.0")
+    implementation("com.github.manoj-mili.readability-kmp:readability-core:0.1.0-alpha01")
 }
 ```
 
-For private GitHub repositories or private packages, consumers need credentials with package read access.
+For private repositories, consumers need JitPack private repository access.
 
 ## Public API
 
@@ -335,8 +328,17 @@ Run the iOS sample from Xcode by opening [`iosApp`](./iosApp).
 
 ## Release Notes
 
-Before publishing a public release:
+Current planned public version:
 
-- Update the POM metadata in [`readability-core/build.gradle.kts`](./readability-core/build.gradle.kts) from `OWNER/REPOSITORY` to the real repository URL.
-- Choose a stable version, for example `0.1.0`.
+```text
+0.1.0-alpha01
+```
+
+This is an alpha release. Public APIs may change before `0.1.0`.
+
+Before tagging a release:
+
+- Confirm [`CHANGELOG.md`](./CHANGELOG.md) has the release entry.
+- Confirm [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE) are included.
+- Confirm JitPack builds `:readability-core`.
 - Publish only `readability-core`; keep `sharedLogic`, `sharedUI`, `androidApp`, and `iosApp` as samples.

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = providers.gradleProperty("GROUP").orElse("com.mili.readability").get()
-version = providers.gradleProperty("VERSION_NAME").orElse("0.1.0-SNAPSHOT").get()
+version = providers.gradleProperty("VERSION_NAME").orElse("0.1.0-alpha01").get()
 
 val generatedReadabilityDir =
     layout.buildDirectory.dir("generated/readability/src/commonMain/kotlin")
@@ -86,7 +86,7 @@ kotlin {
     // A step-by-step guide on how to include this library in an XCode
     // project can be found here:
     // https://developer.android.com/kotlin/multiplatform/migrate
-    val xcfName = "sharedKit"
+    val xcfName = "ReadabilityCore"
 
     iosX64 {
         binaries.framework {
@@ -174,32 +174,13 @@ publishing {
             name = "localBuild"
             url = layout.buildDirectory.dir("repo").get().asFile.toURI()
         }
-        maven {
-            name = "GitHubPackages"
-            val githubRepository =
-                providers.gradleProperty("github.repository")
-                    .orElse(providers.environmentVariable("GITHUB_REPOSITORY"))
-                    .orElse("OWNER/REPOSITORY")
-                    .get()
-            url = uri("https://maven.pkg.github.com/$githubRepository")
-            credentials {
-                username =
-                    providers.gradleProperty("gpr.user")
-                        .orElse(providers.environmentVariable("GITHUB_ACTOR"))
-                        .orNull
-                password =
-                    providers.gradleProperty("gpr.key")
-                        .orElse(providers.environmentVariable("GITHUB_TOKEN"))
-                        .orNull
-            }
-        }
     }
 
     publications.withType<MavenPublication>().configureEach {
         pom {
             name = "Readability Core"
             description = "Kotlin Multiplatform reader-mode SDK core built around Mozilla Readability."
-            url = "https://github.com/OWNER/REPOSITORY"
+            url = "https://github.com/manoj-mili/readability-kmp"
             licenses {
                 license {
                     name = "Apache License, Version 2.0"
@@ -213,9 +194,9 @@ publishing {
                 }
             }
             scm {
-                url = "https://github.com/OWNER/REPOSITORY"
-                connection = "scm:git:https://github.com/OWNER/REPOSITORY.git"
-                developerConnection = "scm:git:ssh://git@github.com/OWNER/REPOSITORY.git"
+                url = "https://github.com/manoj-mili/readability-kmp"
+                connection = "scm:git:https://github.com/manoj-mili/readability-kmp.git"
+                developerConnection = "scm:git:ssh://git@github.com/manoj-mili/readability-kmp.git"
             }
         }
     }

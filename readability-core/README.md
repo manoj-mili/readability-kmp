@@ -65,7 +65,7 @@ interface ReaderModeEngine {
 
 5. Implement Android and iOS adapters in platform modules or source sets, not in shared UI.
 6. Make `sharedUI` and app modules consume the SDK through `ReaderModeEngine` or `ReadabilityScriptProvider`.
-7. Add fixture-based tests with saved HTML pages and expected article fields before publishing.
+7. Add fixture-based tests with saved HTML pages and expected article fields before beta.
 
 ## Publishing Plan
 
@@ -78,7 +78,7 @@ implementation(project(":readability-core"))
 For a generated local Maven build:
 
 ```shell
-./gradlew :readability-core:publishToMavenLocal -PVERSION_NAME=0.1.0-local
+./gradlew :readability-core:publishToMavenLocal -PVERSION_NAME=0.1.0-alpha01
 ```
 
 Then consume it from another KMP project:
@@ -91,14 +91,14 @@ repositories {
 }
 
 dependencies {
-    implementation("com.mili.readability:readability-core:0.1.0-local")
+    implementation("com.mili.readability:readability-core:0.1.0-alpha01")
 }
 ```
 
 For a generated repository folder that can be zipped or copied:
 
 ```shell
-./gradlew :readability-core:publishAllPublicationsToLocalBuildRepository -PVERSION_NAME=0.1.0-local
+./gradlew :readability-core:publishAllPublicationsToLocalBuildRepository -PVERSION_NAME=0.1.0-alpha01
 ```
 
 The artifacts are written under `readability-core/build/repo`.
@@ -110,37 +110,26 @@ For use by other projects:
 - Generate an XCFramework for iOS consumers that are not using Gradle directly.
 - Keep package names and binary API stable before the first `0.1.0` release.
 
-For GitHub Packages:
+For JitPack:
 
 ```shell
-./gradlew :readability-core:publishAllPublicationsToGitHubPackagesRepository \
-  -Pgithub.repository=OWNER/REPOSITORY \
-  -Pgpr.user=GITHUB_USER \
-  -Pgpr.key=GITHUB_TOKEN \
-  -PVERSION_NAME=0.1.0
+git tag 0.1.0-alpha01
+git push origin 0.1.0-alpha01
 ```
 
-Consumers add the GitHub Maven repository:
+Consumers add the JitPack Maven repository:
 
 ```kotlin
 repositories {
     google()
     mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.github.com/OWNER/REPOSITORY")
-        credentials {
-            username = providers.gradleProperty("gpr.user").orNull
-            password = providers.gradleProperty("gpr.key").orNull
-        }
-    }
+    maven("https://jitpack.io")
 }
 
 dependencies {
-    implementation("com.mili.readability:readability-core:0.1.0")
+    implementation("com.github.manoj-mili.readability-kmp:readability-core:0.1.0-alpha01")
 }
 ```
-
-The included GitHub Actions workflow publishes `:readability-core` when manually triggered or when pushing a tag like `v0.1.0`.
 
 ## Verification
 
