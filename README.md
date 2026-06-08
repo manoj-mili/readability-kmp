@@ -328,17 +328,10 @@ Run the iOS sample from Xcode by opening [`iosApp`](./iosApp).
 
 ## Release Notes
 
-Current planned public version:
+Current alpha version:
 
 ```text
 0.1.0-alpha01
 ```
 
 This is an alpha release. Public APIs may change before `0.1.0`.
-
-Before tagging a release:
-
-- Confirm [`CHANGELOG.md`](./CHANGELOG.md) has the release entry.
-- Confirm [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE) are included.
-- Confirm JitPack builds `:readability-core`.
-- Publish only `readability-core`; keep `sharedLogic`, `sharedUI`, `androidApp`, and `iosApp` as samples.

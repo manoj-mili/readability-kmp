@@ -41,3 +41,12 @@ Use these version phases:
 - `beta`: feature-complete for the release line, API changes should be rare.
 - `rc`: release candidate, only critical fixes expected.
 - stable: no suffix, for example `0.1.0`.
+
+## Release Checklist
+
+Before tagging a release:
+
+- Confirm `CHANGELOG.md` has the release entry.
+- Confirm `LICENSE` and `NOTICE` are included.
+- Confirm JitPack builds `:readability-core`.
+- Publish only `readability-core`; keep `sharedLogic`, `sharedUI`, `androidApp`, and `iosApp` as samples.
