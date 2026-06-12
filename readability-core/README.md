@@ -25,11 +25,16 @@ What was not correct:
 Current minimal API:
 
 ```kotlin
-val scriptProvider: ReadabilityScriptProvider = MozillaReadabilityScriptProvider()
+val scriptProvider: ReadabilityScriptProvider = defaultReadabilityScriptProvider()
 val readabilityJs: String = scriptProvider.getReadabilityScript()
+val state = ReaderModeStateJsonParser().parse(rawReadabilityJson)
 ```
 
-`ReaderArticle` represents extracted article data returned by Readability.js. `ReaderModeState` represents reader-mode workflow state for apps that want a shared state model.
+`ReaderArticle` represents extracted article data returned by Readability.js. `ReaderModeState` represents reader-mode workflow state for apps that want a shared state model. `ReaderModeStateJsonParser` converts raw `JSON.stringify(article)` output into that state without coupling the SDK to WebView or WKWebView APIs.
+
+The core SDK provides the bundled script, shared reader-mode models, and raw JSON-to-state parsing. Platform/app layers still own browser lifecycle, JavaScript injection/evaluation, platform-specific result unwrapping, and UI rendering.
+
+`ReaderModeStateJsonParser` returns `Unavailable` for blank input, `null`, `undefined`, or missing article HTML; returns `Failed` for malformed JSON or an invalid JSON shape; and accepts either Readability's `content` field or the SDK alias `contentHtml`.
 
 ## Recommended SDK Shape
 
@@ -53,8 +58,7 @@ This keeps the pure SDK portable while still giving browser apps convenient plat
 })();
 ```
 
-3. Add `ReaderArticleJsonParser` in common code. Use `kotlinx.serialization` so Android and iOS decode the same payload.
-4. Add platform adapter interfaces:
+3. Add platform adapter interfaces:
 
 ```kotlin
 interface ReaderModeEngine {
@@ -63,9 +67,9 @@ interface ReaderModeEngine {
 }
 ```
 
-5. Implement Android and iOS adapters in platform modules or source sets, not in shared UI.
-6. Make `sharedUI` and app modules consume the SDK through `ReaderModeEngine` or `ReadabilityScriptProvider`.
-7. Add fixture-based tests with saved HTML pages and expected article fields before beta.
+4. Implement Android and iOS adapters in platform modules or source sets, not in shared UI.
+5. Make `sharedUI` and app modules consume the SDK through `ReaderModeEngine` or `ReadabilityScriptProvider`.
+6. Add fixture-based tests with saved HTML pages and expected article fields before beta.
 
 ## Publishing Plan
 
