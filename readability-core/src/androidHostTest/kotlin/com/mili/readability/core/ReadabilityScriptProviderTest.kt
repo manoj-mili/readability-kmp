@@ -3,10 +3,10 @@ package com.mili.readability.core
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class MozillaReadabilityScriptProviderTest {
+class ReadabilityScriptProviderTest {
     @Test
-    fun providesBundledReadabilityScript() {
-        val script = MozillaReadabilityScriptProvider().getReadabilityScript()
+    fun defaultProviderReturnsBundledScript() {
+        val script = defaultReadabilityScriptProvider().getReadabilityScript()
 
         assertTrue(script.contains("function Readability"))
     }

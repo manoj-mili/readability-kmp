@@ -8,7 +8,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
-import com.mili.readability.core.MozillaReadabilityScriptProvider
+import com.mili.readability.core.defaultReadabilityScriptProvider
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.cinterop.readValue
@@ -33,7 +33,7 @@ actual fun PlatformReaderWebView(
     val currentReadabilityMode by rememberUpdatedState(readabilityMode)
     val currentOnStatusChanged by rememberUpdatedState(onStatusChanged)
     val extractionScript = remember {
-        readabilityExtractionScript(MozillaReadabilityScriptProvider().getReadabilityScript())
+        readabilityExtractionScript(defaultReadabilityScriptProvider().getReadabilityScript())
     }
     var lastLoadedUrl by remember { mutableStateOf<String?>(null) }
     var lastReadabilityMode by remember { mutableStateOf(false) }

@@ -1,6 +1,6 @@
 package com.mili.readabilitykmp
 
-import com.mili.readability.core.MozillaReadabilityScriptProvider
+import com.mili.readability.core.defaultReadabilityScriptProvider
 import com.mili.readability.core.ReaderArticle
 import com.mili.readability.core.ReaderModeState
 
@@ -26,7 +26,7 @@ data class ReadabilityUiSampleState(
 
 class ReadabilityUiSample {
     fun state(): ReadabilityUiSampleState {
-        val script = MozillaReadabilityScriptProvider().getReadabilityScript()
+        val script = defaultReadabilityScriptProvider().getReadabilityScript()
         val article = ReaderArticle(
             title = "Readable Sample Article",
             contentHtml = "<article><h1>Readable Sample Article</h1><p>Reader mode content preview.</p></article>",

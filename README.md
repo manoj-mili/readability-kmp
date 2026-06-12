@@ -106,10 +106,10 @@ For private repositories, consumers need JitPack private repository access.
 The SDK currently exposes a small, platform-neutral API from the package:
 
 ```kotlin
-import com.mili.readability.core.MozillaReadabilityScriptProvider
 import com.mili.readability.core.ReadabilityScriptProvider
 import com.mili.readability.core.ReaderArticle
 import com.mili.readability.core.ReaderModeState
+import com.mili.readability.core.ReaderModeStateJsonParser
 ```
 
 ### `ReadabilityScriptProvider`
@@ -122,10 +122,10 @@ interface ReadabilityScriptProvider {
 }
 ```
 
-You normally use the default implementation:
+You normally use the default factory function:
 
 ```kotlin
-val provider: ReadabilityScriptProvider = MozillaReadabilityScriptProvider()
+val provider: ReadabilityScriptProvider = defaultReadabilityScriptProvider()
 val readabilityJs: String = provider.getReadabilityScript()
 ```
 
@@ -150,7 +150,37 @@ data class ReaderArticle(
 )
 ```
 
-Output: your app should map the JSON returned by the injected JavaScript into this model.
+Output: `ReaderModeStateJsonParser` maps Readability's `content` field into this model's `contentHtml` field.
+
+### `ReaderModeStateJsonParser`
+
+DI-friendly parser for raw JSON returned by `JSON.stringify(article)` in the page context.
+
+```kotlin
+class ReaderModeStateJsonParser {
+    fun parse(rawJson: String): ReaderModeState
+}
+```
+
+Use a normal class instance so apps can register it with DI frameworks:
+
+```kotlin
+val parser = ReaderModeStateJsonParser()
+val state = parser.parse(rawReadabilityJson)
+```
+
+Koin consumers can register it as:
+
+```kotlin
+single { ReaderModeStateJsonParser() }
+```
+
+The parser:
+
+- Returns `ReaderModeState.Available` when readable article HTML is present.
+- Returns `ReaderModeState.Unavailable` for blank input, `null`, `undefined`, or missing/blank article HTML.
+- Returns `ReaderModeState.Failed` for malformed JSON or an invalid JSON shape.
+- Accepts Mozilla Readability's `content` field and the SDK model alias `contentHtml`; `content` wins when both are present.
 
 ### `ReaderModeState`
 
@@ -176,17 +206,30 @@ At minimum, your app needs to implement:
 
 - A page-loaded hook, such as Android `WebViewClient.onPageFinished` or an equivalent `WKWebView` navigation callback.
 - A JavaScript evaluator, such as `WebView.evaluateJavascript` or `WKWebView.evaluateJavaScript`.
-- JSON decoding from the JavaScript result into `ReaderArticle`.
-- Error handling that maps failures to `ReaderModeState.Failed` or `ReaderModeState.Unavailable`.
+- Platform-specific unwrapping of the JavaScript evaluator result, when needed.
+- Passing the raw Readability JSON to `ReaderModeStateJsonParser`.
+
+The SDK provides:
+
+- The bundled Mozilla Readability script through `ReadabilityScriptProvider`.
+- Shared reader-mode models through `ReaderArticle` and `ReaderModeState`.
+- Raw JSON-to-state parsing through `ReaderModeStateJsonParser`.
+
+The platform/app layer provides:
+
+- Browser ownership, page loading, and lifecycle timing.
+- JavaScript injection and evaluation.
+- Any platform-specific result unwrapping before calling the parser.
+- Rendering for the returned `ReaderModeState`.
 
 The integration flow is:
 
-1. Create `MozillaReadabilityScriptProvider`.
+1. Call `defaultReadabilityScriptProvider()` to obtain a provider.
 2. Call `getReadabilityScript()`.
 3. Inject the returned script into the loaded page.
 4. Invoke the extraction wrapper in the page context.
-5. Decode the returned JSON.
-6. Return `ReaderModeState.Available(article)` when parsing succeeds.
+5. Pass the raw JSON to `ReaderModeStateJsonParser.parse`.
+6. Render the returned `ReaderModeState`.
 
 The extraction wrapper your app invokes after injecting the SDK script is:
 
@@ -215,16 +258,16 @@ Example successful output:
 }
 ```
 
-Map `content` from the Readability result to `ReaderArticle.contentHtml`.
+`ReaderModeStateJsonParser` maps `content` from the Readability result to `ReaderArticle.contentHtml`.
 
 ## Basic Usage
 
-Use `MozillaReadabilityScriptProvider` to access the bundled Mozilla Readability script:
+Use `defaultReadabilityScriptProvider()` to access the bundled Mozilla Readability script:
 
 ```kotlin
-import com.mili.readability.core.MozillaReadabilityScriptProvider
+import com.mili.readability.core.defaultReadabilityScriptProvider
 
-val scriptProvider = MozillaReadabilityScriptProvider()
+val scriptProvider = defaultReadabilityScriptProvider()
 val readabilityJs = scriptProvider.getReadabilityScript()
 ```
 
@@ -237,30 +280,13 @@ Inject that script into your platform browser context, then execute a wrapper th
 })();
 ```
 
-The returned JSON should be decoded by the host app and mapped to:
+Pass the raw JSON returned by the wrapper to `ReaderModeStateJsonParser`:
 
 ```kotlin
-import com.mili.readability.core.ReaderArticle
+import com.mili.readability.core.ReaderModeStateJsonParser
 
-val article = ReaderArticle(
-    title = "Article title",
-    contentHtml = "<article>...</article>",
-    textContent = "Readable article text",
-    length = 1234,
-    excerpt = "Short preview",
-    siteName = "Example"
-)
-```
-
-Use `ReaderModeState` if your app wants a shared state model:
-
-```kotlin
-import com.mili.readability.core.ReaderModeState
-
-val state: ReaderModeState = when {
-    article != null -> ReaderModeState.Available(article)
-    else -> ReaderModeState.Unavailable("No readable article found")
-}
+val parser = ReaderModeStateJsonParser()
+val state = parser.parse(rawReadabilityJson)
 ```
 
 ## Android Integration Sketch
@@ -268,7 +294,7 @@ val state: ReaderModeState = when {
 In an Android app, inject the script into a `WebView` after the page is loaded:
 
 ```kotlin
-val readabilityJs = MozillaReadabilityScriptProvider().getReadabilityScript()
+val readabilityJs = defaultReadabilityScriptProvider().getReadabilityScript()
 
 webView.evaluateJavascript(readabilityJs) {
     webView.evaluateJavascript(
@@ -279,19 +305,19 @@ webView.evaluateJavascript(readabilityJs) {
         })();
         """.trimIndent()
     ) { json ->
-        // Decode json and map it to ReaderArticle.
+        // Unwrap Android's quoted evaluateJavascript result, then pass raw JSON to ReaderModeStateJsonParser.
     }
 }
 ```
 
-The exact WebView lifecycle, page-readiness checks, and JSON decoding should live in your app or a platform adapter module.
+The exact WebView lifecycle, page-readiness checks, and JavaScript result unwrapping should live in your app or a platform adapter module.
 
 ## iOS Integration Sketch
 
 In an iOS app, expose the KMP framework to Swift and inject the script into `WKWebView`:
 
 ```swift
-let script = MozillaReadabilityScriptProvider().getReadabilityScript()
+let script = ReadabilityScriptProviderKt.defaultReadabilityScriptProvider().getReadabilityScript()
 
 webView.evaluateJavaScript(script) { _, error in
     guard error == nil else { return }
@@ -304,7 +330,7 @@ webView.evaluateJavaScript(script) { _, error in
     """
 
     webView.evaluateJavaScript(wrapper) { result, error in
-        // Decode result and map it to your reader article model.
+        // Pass the raw JSON string result to ReaderModeStateJsonParser.
     }
 }
 ```

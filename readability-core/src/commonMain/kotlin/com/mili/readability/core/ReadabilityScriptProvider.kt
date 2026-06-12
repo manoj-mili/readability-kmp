@@ -6,3 +6,10 @@ package com.mili.readability.core
 interface ReadabilityScriptProvider {
     fun getReadabilityScript(): String
 }
+
+/**
+ * Creates the default [ReadabilityScriptProvider] backed by the bundled
+ * Mozilla Readability script.
+ */
+fun defaultReadabilityScriptProvider(): ReadabilityScriptProvider =
+    MozillaReadabilityScriptProvider()
